@@ -23,8 +23,6 @@ chroma_db/
 *.sqlite
 *.sqlite3
 
-# Research PDFs
-papers/*.pdf
 
 # IDE
 .vscode/
