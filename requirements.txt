@@ -11,3 +11,4 @@ sentence-transformers
 pypdf
 tavily-python
 python-dotenv
+langchain-chroma
