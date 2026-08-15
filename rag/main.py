@@ -514,14 +514,26 @@ def web_search(query: str):
     latest, or internet-based information.
     """
 
-    response = tavily_client.search(
+    try:
 
-        query=query,
+        response = tavily_client.search(
+            query=query,
+            search_depth="advanced",
+            max_results=5
+        )
 
-        search_depth="advanced",
+    except Exception as e:
 
-        max_results=5
-    )
+        return {
+            "query": query,
+            "results": [],
+            "sources": [],
+            "error": (
+                "Live web search is temporarily unavailable. "
+                "Please try again."
+            )
+        }
+
 
     results = []
 
@@ -546,19 +558,17 @@ def web_search(query: str):
             }
         )
 
-    # Create clean source list.
+
     sources = format_web_sources(
         results
     )
 
+
     return {
         "query": query,
-
         "results": results,
-
         "sources": sources
     }
-
 
 # ============================================================
 # 18.5. DETECT TIME-SENSITIVE QUESTIONS
