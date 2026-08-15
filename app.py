@@ -3,6 +3,7 @@ import sqlite3
 import json
 from pathlib import Path
 from datetime import datetime
+import httpx
 
 
 # ============================================================
@@ -760,16 +761,97 @@ if question:
             "🔬 Researching..."
         ):
 
-            result = research_agent.invoke(
-                {
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": question
-                        }
-                    ]
-                }
-            )
+            # ------------------------------------------------
+            # CHECK MISTRAL API KEY
+            # ------------------------------------------------
+
+            import os
+
+            if not os.getenv("MISTRAL_API_KEY"):
+
+                st.error(
+                    "❌ MISTRAL_API_KEY is not configured "
+                    "in Streamlit Cloud Secrets."
+                )
+
+                st.stop()
+
+
+            # ------------------------------------------------
+            # RUN RESEARCH AGENT SAFELY
+            # ------------------------------------------------
+
+            try:
+
+                result = research_agent.invoke(
+                    {
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": question
+                            }
+                        ]
+                    }
+                )
+
+            except httpx.HTTPStatusError as e:
+
+                status_code = e.response.status_code
+
+                st.error(
+                    f"❌ Mistral API returned HTTP {status_code}"
+                )
+
+                if status_code == 401:
+
+                    st.warning(
+                        "The Mistral API key is invalid, "
+                        "expired, or is not being read correctly."
+                    )
+
+                elif status_code == 402:
+
+                    st.warning(
+                        "The Mistral account requires billing/payment "
+                        "or has no available API usage."
+                    )
+
+                elif status_code == 403:
+
+                    st.warning(
+                        "The API key does not have permission "
+                        "for this request or model."
+                    )
+
+                elif status_code == 404:
+
+                    st.warning(
+                        "The requested Mistral model or endpoint "
+                        "was not found."
+                    )
+
+                elif status_code == 422:
+
+                    st.warning(
+                        "Mistral rejected the request. "
+                        "The model name or request parameters "
+                        "may be invalid."
+                    )
+
+                elif status_code == 429:
+
+                    st.warning(
+                        "Mistral rate limit reached. "
+                        "Please wait and try again."
+                    )
+
+                else:
+
+                    st.warning(
+                        "Mistral returned an unexpected API error."
+                    )
+
+                st.stop()
 
 
             clean_result = format_agent_result(
