@@ -604,6 +604,40 @@ def is_time_sensitive(question):
         for term in TIME_SENSITIVE_TERMS
     )
 
+PAPER_TERMS = [
+    "paper",
+    "research paper",
+    "according to the paper",
+    "from the paper",
+    "in the paper",
+    "architecture",
+    "methodology",
+    "experiment",
+    "experiments",
+    "results",
+    "findings",
+    "proposed",
+    "according to",
+    "gru",
+    "bert",
+    "rag",
+    "attention",
+    "transformer",
+    "react",
+    "few shot",
+    "few-shot",
+]
+
+
+def is_paper_question(question):
+
+    question_lower = question.lower()
+
+    return any(
+        term in question_lower
+        for term in PAPER_TERMS
+    )
+
 
 # ============================================================
 # 18. EXTRACT TEXT FROM MISTRAL CONTENT
