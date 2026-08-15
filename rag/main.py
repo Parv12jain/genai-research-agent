@@ -546,12 +546,10 @@ def web_search(query: str):
             }
         )
 
-
     # Create clean source list.
     sources = format_web_sources(
         results
     )
-
 
     return {
         "query": query,
@@ -560,6 +558,38 @@ def web_search(query: str):
 
         "sources": sources
     }
+
+
+# ============================================================
+# 18.5. DETECT TIME-SENSITIVE QUESTIONS
+# ============================================================
+
+TIME_SENSITIVE_TERMS = [
+    "latest",
+    "current",
+    "recent",
+    "today",
+    "newest",
+    "recently",
+    "this year",
+    "this month",
+    "what changed",
+    "latest update",
+    "latest updates",
+    "current version",
+    "latest version",
+    "recent developments",
+]
+
+
+def is_time_sensitive(question):
+
+    question_lower = question.lower()
+
+    return any(
+        term in question_lower
+        for term in TIME_SENSITIVE_TERMS
+    )
 
 
 # ============================================================
@@ -925,39 +955,104 @@ def load_research_agent():
             web_search
         ],
         system_prompt="""
-You are a research assistant.
+You are a research assistant that provides accurate,
+evidence-based answers.
 
 You have access to two information sources:
 
 1. research_papers
    - Searches the user's uploaded research papers using RAG + MMR.
-   - Use this when the question refers to, asks about, or can be answered
-     from the uploaded research papers.
+   - Use this for questions about the uploaded papers.
 
 2. web_search
    - Searches the live internet.
-   - Use this for latest, current, recent, live, or internet-based information.
+   - Use this for current, recent, latest, live, or
+     internet-based information.
 
-IMPORTANT TOOL RULES:
+============================================================
+TOOL SELECTION RULES
+============================================================
 
-- If the user explicitly mentions a paper, research paper, uploaded paper,
-  paper architecture, paper methodology, paper findings, or paper results,
+PAPER QUESTIONS:
+
+- If the user explicitly mentions a research paper,
+  uploaded paper, paper architecture, methodology,
+  findings, experiments, or results:
+
   ALWAYS use research_papers.
 
-- If the user asks for latest/current/recent information,
-  use web_search.
+CURRENT / TIME-SENSITIVE QUESTIONS:
 
-- If the user asks to compare information from the uploaded papers
-  with current web information, use BOTH tools.
+- If the user uses words such as:
+  latest, current, recent, today, newest, new,
+  this year, this month, 2026, recently, updates,
+  developments, what changed, current version,
+  latest version:
 
-- Do not answer research-paper questions from your own general knowledge
-  when the research_papers tool can provide evidence.
+  ALWAYS use web_search BEFORE answering.
 
-After receiving tool results, use them to produce the final answer.
+- NEVER answer a time-sensitive question using your
+  internal knowledge alone.
+
+- NEVER describe information as "latest", "current",
+  or "recent" unless web_search was actually used.
+
+- When using web_search, prefer recent and authoritative
+  sources.
+
+- Check the dates of the sources whenever possible.
+
+- Do not treat an old article or report as a current
+  update unless you clearly identify its publication date
+  and explain that it is historical information.
+
+- If current information cannot be verified from web
+  search, explicitly say that current information could
+  not be verified.
+
+COMPARISON QUESTIONS:
+
+- If the user asks to compare uploaded research papers
+  with current information:
+
+  ALWAYS use BOTH research_papers and web_search.
+
+GENERAL QUESTIONS:
+
+- For general questions that are not paper-specific and
+  are not time-sensitive, you may answer using your
+  general knowledge or use web_search when useful.
+
+============================================================
+ANSWER RULES
+============================================================
+
+- Base factual claims on the evidence returned by the
+  tools whenever tools are used.
+
+- Do not invent sources, dates, versions, statistics,
+  or facts.
+
+- For web-based answers, include the important sources
+  used.
+
+- Clearly distinguish historical information from current
+  information.
+
+- If sources disagree, mention the disagreement rather
+  than silently choosing one.
+
+- Never claim that information is current unless it was
+  verified through web search.
+
+After receiving tool results, synthesize the evidence
+into a clear and concise final answer.
 """
-    )
+)
 
 
 research_agent = load_research_agent()
+
+
 
 

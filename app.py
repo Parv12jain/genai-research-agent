@@ -778,6 +778,51 @@ if question:
 
 
             # ------------------------------------------------
+            # ROUTE TIME-SENSITIVE QUESTIONS TO LIVE WEB SEARCH
+            # ------------------------------------------------
+
+            from rag.main import (
+                is_time_sensitive,
+                web_search
+            )
+
+            if is_time_sensitive(question):
+
+                # Force a live web search for queries containing
+                # latest/current/recent/time-sensitive language.
+                web_results = web_search.invoke(
+                    {
+                        "query": question
+                    }
+                )
+
+                enhanced_question = f"""
+The user asked:
+
+{question}
+
+This is a time-sensitive/current-information question.
+
+IMPORTANT:
+- You MUST base the answer on the live web-search results below.
+- Do NOT answer this question from internal knowledge alone.
+- Prefer the most recent and authoritative information.
+- Pay attention to publication/update dates.
+- Do not describe old information as "latest".
+- Clearly distinguish historical information from current information.
+- Mention important dates when relevant.
+- Include the important web sources in the final answer.
+
+LIVE WEB SEARCH RESULTS:
+{web_results}
+"""
+
+            else:
+
+                enhanced_question = question
+
+
+            # ------------------------------------------------
             # RUN RESEARCH AGENT SAFELY
             # ------------------------------------------------
 
@@ -788,7 +833,7 @@ if question:
                         "messages": [
                             {
                                 "role": "user",
-                                "content": question
+                                "content": enhanced_question
                             }
                         ]
                     }
@@ -961,3 +1006,4 @@ elif (
         display_result(
             selected_search
         )
+        
