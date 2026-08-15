@@ -468,95 +468,101 @@ def display_sources(sources):
 # DISPLAY RESULT
 # ============================================================
 
-def display_result(item):
+def display_sources(sources):
     """
-    Display a saved research result.
+    Display paper and web sources using native Streamlit components.
     """
 
-    question = item["question"]
+    if not sources:
+        return
 
-    answer = item["answer"]
+    st.divider()
+    st.subheader("📚 Sources")
 
-    sources = item["sources"]
+    # Separate sources
+    paper_sources = [
+        source
+        for source in sources
+        if source.get("type") == "paper"
+    ]
 
-    tools_used = item["tools_used"]
+    web_sources = [
+        source
+        for source in sources
+        if source.get("type") == "web"
+    ]
 
-    created_at = item.get(
-        "created_at",
-        ""
-    )
+    # --------------------------------------------------------
+    # RESEARCH PAPERS
+    # --------------------------------------------------------
 
+    if paper_sources:
 
-    # ========================================================
-    # USER QUESTION
-    # ========================================================
+        st.markdown("### 📄 Research Papers")
 
-    with st.chat_message("user"):
+        for index, source in enumerate(
+            paper_sources,
+            start=1
+        ):
 
-        st.write(question)
-
-
-    # ========================================================
-    # ASSISTANT ANSWER
-    # ========================================================
-
-    with st.chat_message("assistant"):
-
-        st.markdown(answer)
-
-
-        # ====================================================
-        # TIMESTAMP
-        # ====================================================
-
-        if created_at:
-
-            st.caption(
-                f"🕒 {created_at}"
+            source_data = source.get(
+                "source",
+                "Unknown source"
             )
 
+            st.markdown(
+                f"**{index}. 📄 {source_data}**"
+            )
 
-        # ====================================================
-        # TOOLS
-        # ====================================================
+    # --------------------------------------------------------
+    # WEB SOURCES
+    # --------------------------------------------------------
 
-        if tools_used:
+    if web_sources:
+
+        st.markdown("### 🌐 Web Sources")
+
+        for index, source in enumerate(
+            web_sources,
+            start=1
+        ):
+
+            source_data = source.get(
+                "source",
+                {}
+            )
+
+            # Safety check
+            if not isinstance(source_data, dict):
+                st.write(
+                    f"{index}. 🌐 {source_data}"
+                )
+                continue
+
+            title = source_data.get(
+                "title",
+                "Web Source"
+            )
+
+            url = source_data.get(
+                "url",
+                ""
+            )
+
+            # Display clean source title
+            st.markdown(
+                f"**{index}. 🌐 {title}**"
+            )
+
+            # Display URL as a proper Streamlit link
+            if url:
+
+                st.link_button(
+                    "🔗 Open Source",
+                    url
+                )
 
             st.divider()
-
-            st.subheader(
-                "🛠️ Tools Used"
-            )
-
-
-            for tool in tools_used:
-
-                if tool == "research_papers":
-
-                    st.write(
-                        "📄 Research Papers"
-                    )
-
-                elif tool == "web_search":
-
-                    st.write(
-                        "🌐 Web Search"
-                    )
-
-                else:
-
-                    st.write(
-                        f"🔧 {tool}"
-                    )
-
-
-        # ====================================================
-        # SOURCES
-        # ====================================================
-
-        display_sources(
-            sources
-        )
 
 
 # ============================================================
@@ -907,37 +913,13 @@ if question:
                     )
 
 
-        # ====================================================
-        # SOURCES
-        # ====================================================
+# -----------------------------------------------
+# SOURCES
+# -----------------------------------------------
 
         display_sources(
             sources
         )
-
-
-    # ========================================================
-    # SAVE SEARCH TO SQLITE
-    # ========================================================
-
-    search_id = save_search(
-        question=question,
-        answer=answer,
-        sources=sources,
-        tools_used=tools_used
-    )
-
-
-    # ========================================================
-    # SELECT NEW SEARCH
-    # ========================================================
-
-    st.session_state.selected_search_id = (
-        search_id
-    )
-
-
-    st.rerun()
 
 
 # ============================================================
