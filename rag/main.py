@@ -1,7 +1,7 @@
 import os
 import ast
 import streamlit as st
-
+import requests
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -522,7 +522,7 @@ def web_search(query: str):
             max_results=5
         )
 
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
 
         return {
             "query": query,
@@ -530,7 +530,18 @@ def web_search(query: str):
             "sources": [],
             "error": (
                 "Live web search is temporarily unavailable. "
-                "Please try again."
+                "Please try again later."
+            )
+        }
+
+    except Exception as e:
+
+        return {
+            "query": query,
+            "results": [],
+            "sources": [],
+            "error": (
+                "Live web search failed unexpectedly."
             )
         }
 
@@ -544,17 +555,9 @@ def web_search(query: str):
 
         results.append(
             {
-                "title": result.get(
-                    "title"
-                ),
-
-                "url": result.get(
-                    "url"
-                ),
-
-                "content": result.get(
-                    "content"
-                )
+                "title": result.get("title"),
+                "url": result.get("url"),
+                "content": result.get("content")
             }
         )
 
